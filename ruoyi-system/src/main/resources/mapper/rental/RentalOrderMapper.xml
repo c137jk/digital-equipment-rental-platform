@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.rental.mapper.RentalOrderMapper">
+    
+    <resultMap type="RentalOrder" id="RentalOrderResult">
+        <result property="orderId"    column="order_id"    />
+        <result property="orderNo"    column="order_no"    />
+        <result property="userId"    column="user_id"    />
+        <result property="userName"    column="user_name"    />
+        <result property="equipmentId"    column="equipment_id"    />
+        <result property="equipmentName"    column="equipment_name"    />
+        <result property="quantity"    column="quantity"    />
+        <result property="rentalType"    column="rental_type"    />
+        <result property="rentalDays"    column="rental_days"    />
+        <result property="startTime"    column="start_time"    />
+        <result property="endTime"    column="end_time"    />
+        <result property="unitPrice"    column="unit_price"    />
+        <result property="rentalAmount"    column="rental_amount"    />
+        <result property="depositAmount"    column="deposit_amount"    />
+        <result property="totalAmount"    column="total_amount"    />
+        <result property="status"    column="status"    />
+        <result property="payTime"    column="pay_time"    />
+        <result property="returnTime"    column="return_time"    />
+        <result property="actualReturnTime"    column="actual_return_time"    />
+        <result property="isOverdue"    column="is_overdue"    />
+        <result property="overdueDays"    column="overdue_days"    />
+        <result property="overdueFee"    column="overdue_fee"    />
+        <result property="refundDeposit"    column="refund_deposit"    />
+        <result property="deductAmount"    column="deduct_amount"    />
+        <result property="deductReason"    column="deduct_reason"    />
+        <result property="userRemark"    column="user_remark"    />
+        <result property="adminRemark"    column="admin_remark"    />
+        <result property="receiverName"    column="receiver_name"    />
+        <result property="receiverPhone"    column="receiver_phone"    />
+        <result property="receiverAddress"    column="receiver_address"    />
+        <result property="returnExpressNo"    column="return_express_no"    />
+        <result property="returnExpressCompany"    column="return_express_company"    />
+        <result property="returnApplyTime"    column="return_apply_time"    />
+        <result property="couponCode"    column="coupon_code"    />
+        <result property="discountAmount"    column="discount_amount"    />
+        <result property="extendDays"    column="extend_days"    />
+        <result property="extendStatus"    column="extend_status"    />
+        <result property="extendFee"    column="extend_fee"    />
+        <result property="isDamaged"    column="is_damaged"    />
+        <result property="delFlag"    column="del_flag"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="updateTime"    column="update_time"    />
+    </resultMap>
+
+    <sql id="selectRentalOrderVo">
+        select o.order_id, o.order_no, o.user_id, u.nick_name as user_name, o.equipment_id, o.equipment_name, 
+               o.quantity, o.rental_type, o.rental_days, o.start_time, o.end_time, o.unit_price, 
+               o.rental_amount, o.deposit_amount, o.total_amount, o.status, o.pay_time, o.return_time, 
+               o.actual_return_time, o.is_overdue, o.overdue_days, o.overdue_fee, o.refund_deposit, 
+               o.deduct_amount, o.deduct_reason, o.user_remark, o.admin_remark, 
+               o.receiver_name, o.receiver_phone, o.receiver_address, 
+               o.return_express_no, o.return_express_company, o.return_apply_time,
+               o.coupon_code, o.discount_amount, o.extend_days, o.extend_status, o.extend_fee, o.is_damaged,
+               o.del_flag, o.create_by, o.create_time, o.update_by, o.update_time
+        from rental_order o
+        left join sys_user u on o.user_id = u.user_id
+    </sql>
+
+    <select id="selectRentalOrderList" parameterType="RentalOrder" resultMap="RentalOrderResult">
+        <include refid="selectRentalOrderVo"/>
+        <where>  
+            o.del_flag = '0'
+            <if test="orderNo != null  and orderNo != ''"> and o.order_no = #{orderNo}</if>
+            <if test="userId != null "> and o.user_id = #{userId}</if>
+            <if test="equipmentId != null "> and o.equipment_id = #{equipmentId}</if>
+            <if test="status != null  and status != ''"> and o.status = #{status}</if>
+            <if test="params.beginTime != null and params.beginTime != ''"><!-- 开始时间检索 -->
+                and date_format(o.create_time,'%y%m%d') &gt;= date_format(#{params.beginTime},'%y%m%d')
+            </if>
+            <if test="params.endTime != null and params.endTime != ''"><!-- 结束时间检索 -->
+                and date_format(o.create_time,'%y%m%d') &lt;= date_format(#{params.endTime},'%y%m%d')
+            </if>
+        </where>
+        order by o.create_time desc
+    </select>
+    
+    <select id="selectRentalOrderByOrderId" parameterType="Long" resultMap="RentalOrderResult">
+        <include refid="selectRentalOrderVo"/>
+        where o.order_id = #{orderId} and o.del_flag = '0'
+    </select>
+
+    <select id="selectRentalOrderByOrderNo" parameterType="String" resultMap="RentalOrderResult">
+        <include refid="selectRentalOrderVo"/>
+        where o.order_no = #{orderNo} and o.del_flag = '0'
+    </select>
+        
+    <insert id="insertRentalOrder" parameterType="RentalOrder" useGeneratedKeys="true" keyProperty="orderId">
+        insert into rental_order
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="orderNo != null and orderNo != ''">order_no,</if>
+            <if test="userId != null">user_id,</if>
+            <if test="equipmentId != null">equipment_id,</if>
+            <if test="equipmentName != null">equipment_name,</if>
+            <if test="quantity != null">quantity,</if>
+            <if test="rentalType != null">rental_type,</if>
+            <if test="rentalDays != null">rental_days,</if>
+            <if test="startTime != null">start_time,</if>
+            <if test="endTime != null">end_time,</if>
+            <if test="unitPrice != null">unit_price,</if>
+            <if test="rentalAmount != null">rental_amount,</if>
+            <if test="depositAmount != null">deposit_amount,</if>
+            <if test="totalAmount != null">total_amount,</if>
+            <if test="status != null">status,</if>
+            <if test="userRemark != null">user_remark,</if>
+            <if test="receiverName != null">receiver_name,</if>
+            <if test="receiverPhone != null">receiver_phone,</if>
+            <if test="receiverAddress != null">receiver_address,</if>
+            <if test="couponCode != null">coupon_code,</if>
+            <if test="discountAmount != null">discount_amount,</if>
+            <if test="createBy != null">create_by,</if>
+            create_time
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="orderNo != null and orderNo != ''">#{orderNo},</if>
+            <if test="userId != null">#{userId},</if>
+            <if test="equipmentId != null">#{equipmentId},</if>
+            <if test="equipmentName != null">#{equipmentName},</if>
+            <if test="quantity != null">#{quantity},</if>
+            <if test="rentalType != null">#{rentalType},</if>
+            <if test="rentalDays != null">#{rentalDays},</if>
+            <if test="startTime != null">#{startTime},</if>
+            <if test="endTime != null">#{endTime},</if>
+            <if test="unitPrice != null">#{unitPrice},</if>
+            <if test="rentalAmount != null">#{rentalAmount},</if>
+            <if test="depositAmount != null">#{depositAmount},</if>
+            <if test="totalAmount != null">#{totalAmount},</if>
+            <if test="status != null">#{status},</if>
+            <if test="userRemark != null">#{userRemark},</if>
+            <if test="receiverName != null">#{receiverName},</if>
+            <if test="receiverPhone != null">#{receiverPhone},</if>
+            <if test="receiverAddress != null">#{receiverAddress},</if>
+            <if test="couponCode != null">#{couponCode},</if>
+            <if test="discountAmount != null">#{discountAmount},</if>
+            <if test="createBy != null">#{createBy},</if>
+            sysdate()
+         </trim>
+    </insert>
+
+    <update id="updateRentalOrder" parameterType="RentalOrder">
+        update rental_order
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="status != null">status = #{status},</if>
+            <if test="payTime != null">pay_time = #{payTime},</if>
+            <if test="returnTime != null">return_time = #{returnTime},</if>
+            <if test="actualReturnTime != null">actual_return_time = #{actualReturnTime},</if>
+            <if test="isOverdue != null">is_overdue = #{isOverdue},</if>
+            <if test="overdueDays != null">overdue_days = #{overdueDays},</if>
+            <if test="overdueFee != null">overdue_fee = #{overdueFee},</if>
+            <if test="refundDeposit != null">refund_deposit = #{refundDeposit},</if>
+            <if test="deductAmount != null">deduct_amount = #{deductAmount},</if>
+            <if test="deductReason != null">deduct_reason = #{deductReason},</if>
+            <if test="adminRemark != null">admin_remark = #{adminRemark},</if>
+            <if test="returnExpressNo != null">return_express_no = #{returnExpressNo},</if>
+            <if test="returnExpressCompany != null">return_express_company = #{returnExpressCompany},</if>
+            <if test="returnApplyTime != null">return_apply_time = #{returnApplyTime},</if>
+            <if test="couponCode != null">coupon_code = #{couponCode},</if>
+            <if test="discountAmount != null">discount_amount = #{discountAmount},</if>
+            <if test="extendDays != null">extend_days = #{extendDays},</if>
+            <if test="extendStatus != null">extend_status = #{extendStatus},</if>
+            <if test="extendFee != null">extend_fee = #{extendFee},</if>
+            <if test="isDamaged != null">is_damaged = #{isDamaged},</if>
+            <if test="startTime != null">start_time = #{startTime},</if>
+            <if test="endTime != null">end_time = #{endTime},</if>
+            <if test="rentalDays != null">rental_days = #{rentalDays},</if>
+            <if test="rentalAmount != null">rental_amount = #{rentalAmount},</if>
+            <if test="totalAmount != null">total_amount = #{totalAmount},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            update_time = sysdate()
+        </trim>
+        where order_id = #{orderId}
+    </update>
+
+    <delete id="deleteRentalOrderByOrderId" parameterType="Long">
+        update rental_order set del_flag = '2' where order_id = #{orderId}
+    </delete>
+
+    <delete id="deleteRentalOrderByOrderIds" parameterType="String">
+        update rental_order set del_flag = '2' where order_id in 
+        <foreach item="orderId" collection="array" open="(" separator="," close=")">
+            #{orderId}
+        </foreach>
+    </delete>
+</mapper>

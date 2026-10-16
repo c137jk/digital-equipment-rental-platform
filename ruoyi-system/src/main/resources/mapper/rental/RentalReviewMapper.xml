@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.rental.mapper.RentalReviewMapper">
+    
+    <resultMap type="RentalReview" id="RentalReviewResult">
+        <result property="reviewId"    column="review_id"    />
+        <result property="orderId"     column="order_id"     />
+        <result property="equipmentId" column="equipment_id" />
+        <result property="userId"      column="user_id"      />
+        <result property="nickName"    column="nick_name"    />
+        <result property="rating"      column="rating"       />
+        <result property="content"     column="content"      />
+        <result property="createTime"  column="create_time"  />
+    </resultMap>
+
+    <select id="selectRentalReviewList" parameterType="RentalReview" resultMap="RentalReviewResult">
+        select review_id, order_id, equipment_id, user_id, nick_name, rating, content, create_time
+        from rental_review
+        <where>
+            <if test="equipmentId != null">and equipment_id = #{equipmentId}</if>
+            <if test="userId != null">and user_id = #{userId}</if>
+            <if test="orderId != null">and order_id = #{orderId}</if>
+        </where>
+        order by create_time desc
+    </select>
+
+    <select id="selectRentalReviewByOrderId" parameterType="Long" resultMap="RentalReviewResult">
+        select review_id, order_id, equipment_id, user_id, nick_name, rating, content, create_time
+        from rental_review where order_id = #{orderId} limit 1
+    </select>
+
+    <insert id="insertRentalReview" parameterType="RentalReview" useGeneratedKeys="true" keyProperty="reviewId">
+        insert into rental_review(order_id, equipment_id, user_id, nick_name, rating, content, create_time)
+        values(#{orderId}, #{equipmentId}, #{userId}, #{nickName}, #{rating}, #{content}, sysdate())
+    </insert>
+</mapper>

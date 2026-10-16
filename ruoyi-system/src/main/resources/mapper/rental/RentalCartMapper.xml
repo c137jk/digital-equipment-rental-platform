@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.rental.mapper.RentalCartMapper">
+    
+    <resultMap type="RentalCart" id="RentalCartResult">
+        <result property="cartId"    column="cart_id"    />
+        <result property="userId"    column="user_id"    />
+        <result property="equipmentId"    column="equipment_id"    />
+        <result property="quantity"    column="quantity"    />
+        <result property="rentalType"    column="rental_type"    />
+        <result property="rentalDays"    column="rental_days"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateTime"    column="update_time"    />
+        <association property="equipment" column="equipment_id" javaType="RentalEquipment" resultMap="equipmentResult" />
+    </resultMap>
+
+    <resultMap id="equipmentResult" type="RentalEquipment">
+        <result property="equipmentId"    column="equipment_id"    />
+        <result property="equipmentName"    column="equipment_name"    />
+        <result property="mainImage"    column="main_image"    />
+        <result property="dailyPrice"    column="daily_price"    />
+        <result property="weeklyPrice"    column="weekly_price"    />
+        <result property="monthlyPrice"    column="monthly_price"    />
+        <result property="deposit"    column="deposit"    />
+        <result property="stock"    column="stock"    />
+        <result property="status"    column="status"    />
+    </resultMap>
+
+    <sql id="selectRentalCartVo">
+        select c.cart_id, c.user_id, c.equipment_id, c.quantity, c.rental_type, c.rental_days, 
+               c.create_time, c.update_time,
+               e.equipment_name, e.main_image, e.daily_price, e.weekly_price, e.monthly_price, 
+               e.deposit, e.stock, e.status
+        from rental_cart c
+        left join rental_equipment e on c.equipment_id = e.equipment_id
+    </sql>
+
+    <select id="selectRentalCartList" parameterType="RentalCart" resultMap="RentalCartResult">
+        <include refid="selectRentalCartVo"/>
+        <where>  
+            <if test="userId != null "> and c.user_id = #{userId}</if>
+            <if test="equipmentId != null "> and c.equipment_id = #{equipmentId}</if>
+        </where>
+        order by c.create_time desc
+    </select>
+
+    <select id="selectRentalCartListByUserId" parameterType="Long" resultMap="RentalCartResult">
+        <include refid="selectRentalCartVo"/>
+        where c.user_id = #{userId}
+        order by c.create_time desc
+    </select>
+    
+    <select id="selectRentalCartByCartId" parameterType="Long" resultMap="RentalCartResult">
+        <include refid="selectRentalCartVo"/>
+        where c.cart_id = #{cartId}
+    </select>
+        
+    <insert id="insertRentalCart" parameterType="RentalCart" useGeneratedKeys="true" keyProperty="cartId">
+        insert into rental_cart
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="userId != null">user_id,</if>
+            <if test="equipmentId != null">equipment_id,</if>
+            <if test="quantity != null">quantity,</if>
+            <if test="rentalType != null">rental_type,</if>
+            <if test="rentalDays != null">rental_days,</if>
+            create_time
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="userId != null">#{userId},</if>
+            <if test="equipmentId != null">#{equipmentId},</if>
+            <if test="quantity != null">#{quantity},</if>
+            <if test="rentalType != null">#{rentalType},</if>
+            <if test="rentalDays != null">#{rentalDays},</if>
+            sysdate()
+         </trim>
+    </insert>
+
+    <update id="updateRentalCart" parameterType="RentalCart">
+        update rental_cart
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="quantity != null">quantity = #{quantity},</if>
+            <if test="rentalType != null">rental_type = #{rentalType},</if>
+            <if test="rentalDays != null">rental_days = #{rentalDays},</if>
+            update_time = sysdate()
+        </trim>
+        where cart_id = #{cartId}
+    </update>
+
+    <delete id="deleteRentalCartByCartId" parameterType="Long">
+        delete from rental_cart where cart_id = #{cartId}
+    </delete>
+
+    <delete id="deleteRentalCartByCartIds" parameterType="String">
+        delete from rental_cart where cart_id in 
+        <foreach item="cartId" collection="array" open="(" separator="," close=")">
+            #{cartId}
+        </foreach>
+    </delete>
+
+    <delete id="deleteRentalCartByUserId" parameterType="Long">
+        delete from rental_cart where user_id = #{userId}
+    </delete>
+</mapper>

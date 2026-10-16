@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.rental.mapper.RentalEquipmentMapper">
+    
+    <resultMap type="RentalEquipment" id="RentalEquipmentResult">
+        <result property="equipmentId"    column="equipment_id"    />
+        <result property="equipmentName"    column="equipment_name"    />
+        <result property="categoryId"    column="category_id"    />
+        <result property="categoryName"    column="category_name"    />
+        <result property="brand"    column="brand"    />
+        <result property="model"    column="model"    />
+        <result property="specifications"    column="specifications"    />
+        <result property="mainImage"    column="main_image"    />
+        <result property="images"    column="images"    />
+        <result property="dailyPrice"    column="daily_price"    />
+        <result property="weeklyPrice"    column="weekly_price"    />
+        <result property="monthlyPrice"    column="monthly_price"    />
+        <result property="deposit"    column="deposit"    />
+        <result property="stock"    column="stock"    />
+        <result property="rentedCount"    column="rented_count"    />
+        <result property="totalRented"    column="total_rented"    />
+        <result property="description"    column="description"    />
+        <result property="rentalNotes"    column="rental_notes"    />
+        <result property="status"    column="status"    />
+        <result property="delFlag"    column="del_flag"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="updateTime"    column="update_time"    />
+        <result property="remark"    column="remark"    />
+    </resultMap>
+
+    <sql id="selectRentalEquipmentVo">
+        select e.equipment_id, e.equipment_name, e.category_id, c.category_name, e.brand, e.model, 
+               e.specifications, e.main_image, e.images, e.daily_price, e.weekly_price, e.monthly_price, 
+               e.deposit, e.stock, e.rented_count, e.total_rented, e.description, e.rental_notes, 
+               e.status, e.del_flag, e.create_by, e.create_time, e.update_by, e.update_time, e.remark
+        from rental_equipment e
+        left join rental_category c on e.category_id = c.category_id
+    </sql>
+
+    <select id="selectRentalEquipmentList" parameterType="RentalEquipment" resultMap="RentalEquipmentResult">
+        <include refid="selectRentalEquipmentVo"/>
+        <where>  
+            e.del_flag = '0'
+            and (c.del_flag = '0' or c.del_flag is null)
+            and (c.status = '0' or c.status is null)
+            <if test="equipmentName != null  and equipmentName != ''"> and e.equipment_name like concat('%', #{equipmentName}, '%')</if>
+            <if test="categoryId != null "> and e.category_id = #{categoryId}</if>
+            <if test="brand != null  and brand != ''"> and e.brand = #{brand}</if>
+            <if test="status != null  and status != ''"> and e.status = #{status}</if>
+            <if test="params.minPrice != null and params.minPrice != ''"> and e.daily_price &gt;= #{params.minPrice}</if>
+            <if test="params.maxPrice != null and params.maxPrice != ''"> and e.daily_price &lt;= #{params.maxPrice}</if>
+        </where>
+        order by e.create_time desc
+    </select>
+    
+    <select id="selectRentalEquipmentByEquipmentId" parameterType="Long" resultMap="RentalEquipmentResult">
+        <include refid="selectRentalEquipmentVo"/>
+        where e.equipment_id = #{equipmentId} and e.del_flag = '0'
+    </select>
+        
+    <insert id="insertRentalEquipment" parameterType="RentalEquipment" useGeneratedKeys="true" keyProperty="equipmentId">
+        insert into rental_equipment
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="equipmentName != null and equipmentName != ''">equipment_name,</if>
+            <if test="categoryId != null">category_id,</if>
+            <if test="brand != null">brand,</if>
+            <if test="model != null">model,</if>
+            <if test="specifications != null">specifications,</if>
+            <if test="mainImage != null">main_image,</if>
+            <if test="images != null">images,</if>
+            <if test="dailyPrice != null">daily_price,</if>
+            <if test="weeklyPrice != null">weekly_price,</if>
+            <if test="monthlyPrice != null">monthly_price,</if>
+            <if test="deposit != null">deposit,</if>
+            <if test="stock != null">stock,</if>
+            <if test="description != null">description,</if>
+            <if test="rentalNotes != null">rental_notes,</if>
+            <if test="status != null">status,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="remark != null">remark,</if>
+            create_time
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="equipmentName != null and equipmentName != ''">#{equipmentName},</if>
+            <if test="categoryId != null">#{categoryId},</if>
+            <if test="brand != null">#{brand},</if>
+            <if test="model != null">#{model},</if>
+            <if test="specifications != null">#{specifications},</if>
+            <if test="mainImage != null">#{mainImage},</if>
+            <if test="images != null">#{images},</if>
+            <if test="dailyPrice != null">#{dailyPrice},</if>
+            <if test="weeklyPrice != null">#{weeklyPrice},</if>
+            <if test="monthlyPrice != null">#{monthlyPrice},</if>
+            <if test="deposit != null">#{deposit},</if>
+            <if test="stock != null">#{stock},</if>
+            <if test="description != null">#{description},</if>
+            <if test="rentalNotes != null">#{rentalNotes},</if>
+            <if test="status != null">#{status},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="remark != null">#{remark},</if>
+            sysdate()
+         </trim>
+    </insert>
+
+    <update id="updateRentalEquipment" parameterType="RentalEquipment">
+        update rental_equipment
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="equipmentName != null and equipmentName != ''">equipment_name = #{equipmentName},</if>
+            <if test="categoryId != null">category_id = #{categoryId},</if>
+            <if test="brand != null">brand = #{brand},</if>
+            <if test="model != null">model = #{model},</if>
+            <if test="specifications != null">specifications = #{specifications},</if>
+            <if test="mainImage != null">main_image = #{mainImage},</if>
+            <if test="images != null">images = #{images},</if>
+            <if test="dailyPrice != null">daily_price = #{dailyPrice},</if>
+            <if test="weeklyPrice != null">weekly_price = #{weeklyPrice},</if>
+            <if test="monthlyPrice != null">monthly_price = #{monthlyPrice},</if>
+            <if test="deposit != null">deposit = #{deposit},</if>
+            <if test="stock != null">stock = #{stock},</if>
+            <if test="description != null">description = #{description},</if>
+            <if test="rentalNotes != null">rental_notes = #{rentalNotes},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            update_time = sysdate()
+        </trim>
+        where equipment_id = #{equipmentId}
+    </update>
+
+    <delete id="deleteRentalEquipmentByEquipmentId" parameterType="Long">
+        update rental_equipment set del_flag = '2' where equipment_id = #{equipmentId}
+    </delete>
+
+    <delete id="deleteRentalEquipmentByEquipmentIds" parameterType="String">
+        update rental_equipment set del_flag = '2' where equipment_id in 
+        <foreach item="equipmentId" collection="array" open="(" separator="," close=")">
+            #{equipmentId}
+        </foreach>
+    </delete>
+
+    <update id="updateStock">
+        update rental_equipment 
+        set stock = stock + #{quantity},
+            rented_count = rented_count - #{quantity}
+        where equipment_id = #{equipmentId}
+    </update>
+</mapper>

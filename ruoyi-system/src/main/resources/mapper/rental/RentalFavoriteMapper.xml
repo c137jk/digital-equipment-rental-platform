@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.rental.mapper.RentalFavoriteMapper">
+    
+    <resultMap type="RentalFavorite" id="RentalFavoriteResult">
+        <result property="favoriteId"    column="favorite_id"    />
+        <result property="userId"    column="user_id"    />
+        <result property="equipmentId"    column="equipment_id"    />
+        <result property="createTime"    column="create_time"    />
+        <association property="equipment" javaType="RentalEquipment">
+            <result property="equipmentId"    column="equipment_id"    />
+            <result property="equipmentName"    column="equipment_name"    />
+            <result property="brand"    column="brand"    />
+            <result property="model"    column="model"    />
+            <result property="mainImage"    column="main_image"    />
+            <result property="dailyPrice"    column="daily_price"    />
+            <result property="deposit"    column="deposit"    />
+            <result property="stock"    column="stock"    />
+        </association>
+    </resultMap>
+
+    <sql id="selectRentalFavoriteVo">
+        select f.favorite_id, f.user_id, f.equipment_id, f.create_time,
+               e.equipment_name, e.brand, e.model, e.main_image, 
+               e.daily_price, e.deposit, e.stock
+        from rental_favorite f
+        left join rental_equipment e on f.equipment_id = e.equipment_id
+    </sql>
+
+    <select id="selectRentalFavoriteListByUserId" parameterType="Long" resultMap="RentalFavoriteResult">
+        <include refid="selectRentalFavoriteVo"/>
+        where f.user_id = #{userId}
+        order by f.create_time desc
+    </select>
+
+    <select id="selectRentalFavoriteByFavoriteId" parameterType="Long" resultMap="RentalFavoriteResult">
+        <include refid="selectRentalFavoriteVo"/>
+        where f.favorite_id = #{favoriteId}
+    </select>
+
+    <select id="checkFavorite" resultType="int">
+        select count(1) from rental_favorite
+        where user_id = #{userId} and equipment_id = #{equipmentId}
+    </select>
+
+    <insert id="insertRentalFavorite" parameterType="RentalFavorite" useGeneratedKeys="true" keyProperty="favoriteId">
+        insert into rental_favorite
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="userId != null">user_id,</if>
+            <if test="equipmentId != null">equipment_id,</if>
+            <if test="createTime != null">create_time,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="userId != null">#{userId},</if>
+            <if test="equipmentId != null">#{equipmentId},</if>
+            <if test="createTime != null">#{createTime},</if>
+         </trim>
+    </insert>
+
+    <delete id="deleteFavoriteByUserAndEquipment">
+        delete from rental_favorite where user_id = #{userId} and equipment_id = #{equipmentId}
+    </delete>
+
+    <delete id="deleteRentalFavoriteByFavoriteId" parameterType="Long">
+        delete from rental_favorite where favorite_id = #{favoriteId}
+    </delete>
+
+    <delete id="deleteRentalFavoriteByFavoriteIds" parameterType="String">
+        delete from rental_favorite where favorite_id in 
+        <foreach item="favoriteId" collection="array" open="(" separator="," close=")">
+            #{favoriteId}
+        </foreach>
+    </delete>
+</mapper>

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.rental.mapper.RentalMessageMapper">
+    
+    <resultMap type="RentalMessage" id="RentalMessageResult">
+        <result property="messageId"  column="message_id"  />
+        <result property="userId"     column="user_id"     />
+        <result property="title"      column="title"       />
+        <result property="content"    column="content"     />
+        <result property="type"       column="type"        />
+        <result property="isRead"     column="is_read"     />
+        <result property="createTime" column="create_time" />
+    </resultMap>
+
+    <select id="selectRentalMessageList" parameterType="RentalMessage" resultMap="RentalMessageResult">
+        select message_id, user_id, title, content, type, is_read, create_time
+        from rental_message
+        <where>
+            <if test="userId != null">and user_id = #{userId}</if>
+            <if test="isRead != null and isRead != ''">and is_read = #{isRead}</if>
+            <if test="type != null and type != ''">and type = #{type}</if>
+        </where>
+        order by create_time desc
+    </select>
+
+    <insert id="insertRentalMessage" parameterType="RentalMessage" useGeneratedKeys="true" keyProperty="messageId">
+        insert into rental_message(user_id, title, content, type, is_read, create_time)
+        values(#{userId}, #{title}, #{content}, #{type}, '0', sysdate())
+    </insert>
+
+    <update id="updateMessageRead">
+        update rental_message set is_read = '1' where message_id = #{messageId}
+    </update>
+
+    <update id="updateAllRead">
+        update rental_message set is_read = '1' where user_id = #{userId} and is_read = '0'
+    </update>
+
+    <select id="selectUnreadCount" resultType="int">
+        select count(*) from rental_message where user_id = #{userId} and is_read = '0'
+    </select>
+</mapper>

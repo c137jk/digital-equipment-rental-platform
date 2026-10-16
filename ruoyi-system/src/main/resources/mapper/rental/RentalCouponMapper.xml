@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.rental.mapper.RentalCouponMapper">
+    
+    <resultMap type="RentalCoupon" id="RentalCouponResult">
+        <result property="couponId"      column="coupon_id"      />
+        <result property="couponCode"    column="coupon_code"    />
+        <result property="couponName"    column="coupon_name"    />
+        <result property="discountType"  column="discount_type"  />
+        <result property="discountValue" column="discount_value" />
+        <result property="minAmount"     column="min_amount"     />
+        <result property="useCount"      column="use_count"      />
+        <result property="maxUse"        column="max_use"        />
+        <result property="status"        column="status"         />
+        <result property="startTime"     column="start_time"     />
+        <result property="endTime"       column="end_time"       />
+        <result property="createTime"    column="create_time"    />
+    </resultMap>
+
+    <select id="selectRentalCouponList" parameterType="RentalCoupon" resultMap="RentalCouponResult">
+        select coupon_id, coupon_code, coupon_name, discount_type, discount_value, min_amount,
+               use_count, max_use, status, start_time, end_time, create_time
+        from rental_coupon
+        <where>
+            <if test="couponCode != null and couponCode != ''">and coupon_code like concat('%', #{couponCode}, '%')</if>
+            <if test="couponName != null and couponName != ''">and coupon_name like concat('%', #{couponName}, '%')</if>
+            <if test="status != null and status != ''">and status = #{status}</if>
+        </where>
+        order by create_time desc
+    </select>
+
+    <select id="selectRentalCouponByCouponId" parameterType="Long" resultMap="RentalCouponResult">
+        select coupon_id, coupon_code, coupon_name, discount_type, discount_value, min_amount,
+               use_count, max_use, status, start_time, end_time, create_time
+        from rental_coupon where coupon_id = #{couponId}
+    </select>
+
+    <select id="selectRentalCouponByCode" parameterType="String" resultMap="RentalCouponResult">
+        select coupon_id, coupon_code, coupon_name, discount_type, discount_value, min_amount,
+               use_count, max_use, status, start_time, end_time, create_time
+        from rental_coupon where coupon_code = #{couponCode}
+    </select>
+
+    <insert id="insertRentalCoupon" parameterType="RentalCoupon" useGeneratedKeys="true" keyProperty="couponId">
+        insert into rental_coupon(coupon_code, coupon_name, discount_type, discount_value, min_amount, max_use, status, start_time, end_time, create_time)
+        values(#{couponCode}, #{couponName}, #{discountType}, #{discountValue}, #{minAmount}, #{maxUse}, #{status}, #{startTime}, #{endTime}, sysdate())
+    </insert>
+
+    <update id="updateRentalCoupon" parameterType="RentalCoupon">
+        update rental_coupon
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="couponName != null">coupon_name = #{couponName},</if>
+            <if test="discountType != null">discount_type = #{discountType},</if>
+            <if test="discountValue != null">discount_value = #{discountValue},</if>
+            <if test="minAmount != null">min_amount = #{minAmount},</if>
+            <if test="maxUse != null">max_use = #{maxUse},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="startTime != null">start_time = #{startTime},</if>
+            <if test="endTime != null">end_time = #{endTime},</if>
+        </trim>
+        where coupon_id = #{couponId}
+    </update>
+
+    <update id="incrementUseCount">
+        update rental_coupon set use_count = use_count + 1 where coupon_id = #{couponId}
+    </update>
+
+    <delete id="deleteRentalCouponByCouponIds" parameterType="String">
+        delete from rental_coupon where coupon_id in 
+        <foreach item="couponId" collection="array" open="(" separator="," close=")">
+            #{couponId}
+        </foreach>
+    </delete>
+</mapper>
