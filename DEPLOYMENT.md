@@ -11,20 +11,15 @@
 
 ### 步骤1: 数据库部署
 ```bash
-# 1. 创建数据库
+# 1. 创建数据库（默认库名 rent，需与 application-druid.yml 保持一致）
 mysql -u root -p
-CREATE DATABASE ry DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
+CREATE DATABASE rent DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
 exit;
 
-# 2. 导入基础数据
+# 2. 导入表结构与演示数据
+#    rent.sql 已包含租赁业务表、若依基础表与菜单权限数据，一次导入即可
 cd sql
-mysql -u root -p ry < ry_20250522.sql
-
-# 3. 导入租赁系统数据
-mysql -u root -p ry < rental_system.sql
-
-# 4. 导入菜单配置
-mysql -u root -p ry < rental_menu.sql
+mysql -u root -p rent < rent.sql
 ```
 
 ### 步骤2: 后端部署
@@ -56,7 +51,7 @@ npm install
 # 2. 启动开发服务器
 npm run dev
 
-# 访问: http://localhost:5173
+# 访问: http://localhost:25642
 ```
 
 ### 步骤4: 管理端部署
