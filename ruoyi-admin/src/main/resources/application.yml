@@ -7,7 +7,8 @@ ruoyi:
   # 版权年份
   copyrightYear: 2025
   # 文件路径 示例（ Windows配置D:/ruoyi/uploadPath，Linux配置 /home/ruoyi/uploadPath）
-  profile: D:/img
+  # 可通过环境变量 RENTAL_UPLOAD_DIR 覆盖，本地真实路径建议写在 application-local.yml
+  profile: ${RENTAL_UPLOAD_DIR:./uploadPath}
   # 获取ip地址开关
   addressEnabled: false
   # 验证码类型 math 数字计算 char 字符验证
@@ -54,7 +55,8 @@ spring:
     # 国际化资源文件路径
     basename: i18n/messages
   profiles:
-    active: druid
+    # local 为本地私有配置（application-local.yml，已被 .gitignore 忽略）
+    active: druid,local
   # 文件上传
   servlet:
     multipart:
@@ -94,8 +96,8 @@ spring:
 token:
   # 令牌自定义标识
   header: Authorization
-  # 令牌密钥
-  secret: abcdefghijklmnopqrstuvwxyz
+  # 令牌密钥（部署前务必替换为足够长的随机字符串，可用环境变量 JWT_SECRET 覆盖）
+  secret: ${JWT_SECRET:please-change-me-to-a-long-random-string}
   # 令牌有效期（默认30分钟）
   expireTime: 30
 

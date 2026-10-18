@@ -286,21 +286,24 @@ redis-server
 ### 3. 配置并启动后端
 
 ```bash
-# 1) 修改数据库账号密码
-#    编辑 ruoyi-admin/src/main/resources/application-druid.yml
-#    修改 master.username / master.password 为本机 MySQL 账号
+# 1) 生成本地私有配置（该文件已被 .gitignore 忽略，不会提交）
+cd ruoyi-admin/src/main/resources
+cp application-local.yml.example application-local.yml      # Windows 用 copy
 
-# 2) 修改文件上传目录（Windows 示例，需保证目录存在且有写权限）
-#    编辑 ruoyi-admin/src/main/resources/application.yml
-#    ruoyi.profile: D:/img
+# 2) 编辑 application-local.yml，填入本机 MySQL 账号密码、JWT 密钥与图片上传目录
 
 # 3) 安装各模块到本地仓库
+cd ../../../..
 mvn clean install -DskipTests
 
 # 4) 启动后端
 cd ruoyi-admin
 mvn spring-boot:run
 ```
+
+> 数据库地址、账号、密码、JWT 密钥、上传目录均支持**环境变量注入**
+> （`MYSQL_HOST` / `MYSQL_PORT` / `MYSQL_USERNAME` / `MYSQL_PASSWORD` / `JWT_SECRET` / `RENTAL_UPLOAD_DIR`），
+> 未设置时回落到配置文件中的占位默认值。
 
 后端启动于 <http://localhost:8080>（`server.address=localhost`，仅监听本机）。
 
@@ -342,18 +345,27 @@ npm run dev
 | 配置项 | 配置文件 | 默认值 / 说明 |
 |---|---|---|
 | 服务端口 | `application.yml` | `server.port: 8080` |
-| 数据库地址 | `application-druid.yml` | `jdbc:mysql://localhost:3306/rent` |
-| 数据库账号 / 密码 | `application-druid.yml` | `master.username` / `master.password` |
+| 数据库地址 | `application-druid.yml` | `${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/rent` |
+| 数据库账号 | `application-druid.yml` | `${MYSQL_USERNAME:root}` |
+| 数据库密码 | `application-druid.yml` | `${MYSQL_PASSWORD:YOUR_MYSQL_PASSWORD}`，**占位符** |
 | Redis 地址 | `application.yml` | `spring.redis.host: localhost`，`port: 6379`，无密码 |
-| JWT 密钥与有效期 | `application.yml` | `token.secret` / `token.expireTime`（单位：分钟，默认 30） |
-| 文件上传目录 | `application.yml` | `ruoyi.profile`（默认 `D:/img`，需按本机修改） |
+| JWT 密钥与有效期 | `application.yml` | `${JWT_SECRET:...}` **占位符** / `token.expireTime`（分钟，默认 30） |
+| 文件上传目录 | `application.yml` | `${RENTAL_UPLOAD_DIR:./uploadPath}` |
 | 上传大小限制 | `application.yml` | 单文件 10MB / 单次请求 20MB |
+| 本地私有配置 | `application-local.yml` | 覆盖上述各项，**已被 `.gitignore` 忽略**，模板见 `application-local.yml.example` |
 | AI 服务密钥 | — | 启用 AI 智能导购前需自行配置 DeepSeek API Key，**仓库不提供** |
 
 ### 安全注意事项
 
-- 仓库内**不包含**任何有效的第三方 API Key（DeepSeek 密钥需自行申请配置）。
-- `application-druid.yml`、`application.yml` 中的数据库账号密码与 JWT 密钥均为**本地演示默认值**，部署到公网前请务必替换。
+- 仓库中**不包含**任何数据库密码、JWT 密钥或第三方 API Key：相关配置项一律写成
+  `${ENV_NAME:默认占位符}` 形式，真实值放在本地 `application-local.yml` 中，该文件已被 `.gitignore` 忽略。
+- 部署到服务器时请通过环境变量注入敏感信息，例如：
+
+  ```bash
+  export MYSQL_USERNAME=rent MYSQL_PASSWORD='强密码' JWT_SECRET='<随机长字符串>' RENTAL_UPLOAD_DIR=/home/rent/uploadPath
+  java -jar ruoyi-admin.jar
+  ```
+
 - 用户密码使用 BCrypt 加密存储，接口不返回任何明文凭证。
 
 ---

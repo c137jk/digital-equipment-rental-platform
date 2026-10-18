@@ -24,14 +24,16 @@ mysql -u root -p rent < rent.sql
 
 ### 步骤2: 后端部署
 ```bash
-# 1. 修改数据库配置
-# 编辑 ruoyi-admin/src/main/resources/application-druid.yml
-# 修改 username 和 password
+# 1. 生成本地私有配置（不会提交到仓库）
+cd ruoyi-admin/src/main/resources
+cp application-local.yml.example application-local.yml
+# 编辑 application-local.yml，填入本机 MySQL 账号密码、JWT 密钥与图片上传目录
 
 # 2. 启动Redis
 redis-server
 
 # 3. 编译项目
+cd ../../../..
 mvn clean install
 
 # 4. 启动后端
@@ -76,14 +78,21 @@ npm run dev
 
 #### 方式1: JAR包部署
 ```bash
-# 1. 打包
+# 1. 打包（注意：不要用本地 application-local.yml 打包进生产包）
 mvn clean package -Dmaven.test.skip=true
 
-# 2. 运行
+# 2. 通过环境变量注入敏感配置（不要写死在配置文件里）
+export MYSQL_HOST=127.0.0.1
+export MYSQL_USERNAME=rent
+export MYSQL_PASSWORD='你的数据库密码'
+export JWT_SECRET='足够长的随机字符串'
+export RENTAL_UPLOAD_DIR=/home/rent/uploadPath
+
+# 3. 运行
 cd ruoyi-admin/target
 java -jar ruoyi-admin.jar
 
-# 3. 后台运行
+# 4. 后台运行
 nohup java -jar ruoyi-admin.jar > server.log 2>&1 &
 ```
 
@@ -98,8 +107,13 @@ ENTRYPOINT ["java","-jar","/app.jar"]
 # 构建镜像
 docker build -t rental-backend .
 
-# 运行容器
-docker run -d -p 8080:8080 --name rental-backend rental-backend
+# 运行容器（敏感配置用 -e 注入）
+docker run -d -p 8080:8080 --name rental-backend \
+  -e MYSQL_HOST=host.docker.internal \
+  -e MYSQL_USERNAME=rent \
+  -e MYSQL_PASSWORD='你的数据库密码' \
+  -e JWT_SECRET='足够长的随机字符串' \
+  rental-backend
 ```
 
 ### 前端生产部署

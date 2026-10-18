@@ -1,0 +1,29 @@
+# ==========================================================
+# 本地私有配置模板
+#
+# 使用方法：
+#   1. 复制本文件为同目录下的 application-local.yml
+#      （Windows: copy application-local.yml.example application-local.yml）
+#   2. 按下述字段填入你自己机器的真实值
+#   3. application-local.yml 已被 .gitignore 忽略，不会被提交
+#
+# 说明：项目默认激活 druid,local 两个 profile，
+#       本文件的配置优先级高于 application.yml / application-druid.yml
+# ==========================================================
+
+spring:
+  datasource:
+    druid:
+      master:
+        # 本机 MySQL 账号密码
+        username: root
+        password: YOUR_MYSQL_PASSWORD
+
+# JWT 令牌密钥
+# 生产环境请替换为足够长的随机字符串，建议改用环境变量 JWT_SECRET 注入，不要写死在文件里
+token:
+  secret: YOUR_JWT_SECRET
+
+ruoyi:
+  # 设备图片上传目录，填写本机绝对路径（Windows 示例：D:/ruoyi/uploadPath）
+  profile: D:/ruoyi/uploadPath
