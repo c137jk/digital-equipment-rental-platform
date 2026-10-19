@@ -2,6 +2,7 @@ package com.ruoyi.rental.service.impl;
 
 import java.util.Date;
 import java.util.List;
+import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.common.utils.DateUtils;
 import com.ruoyi.common.utils.uuid.IdUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -72,13 +73,23 @@ public class RentalOrderServiceImpl implements IRentalOrderService {
     @Override
     @Transactional
     public int insertRentalOrder(RentalOrder rentalOrder) {
+        // 校验租赁数量
+        Integer quantity = rentalOrder.getQuantity();
+        if (quantity == null || quantity <= 0) {
+            throw new ServiceException("租赁数量不合法，下单失败");
+        }
+
         // 生成订单号
         rentalOrder.setOrderNo("RO" + IdUtils.fastSimpleUUID());
         rentalOrder.setCreateTime(DateUtils.getNowDate());
         rentalOrder.setStatus("0"); // 待支付
 
-        // 减少库存
-        equipmentService.updateStock(rentalOrder.getEquipmentId(), -rentalOrder.getQuantity());
+        // 扣减库存：条件更新（stock + quantity >= 0），库存不足时影响行数为 0
+        // 抛出运行时异常由 @Transactional 回滚，避免并发下单把库存扣成负数
+        int rows = equipmentService.updateStock(rentalOrder.getEquipmentId(), -quantity);
+        if (rows == 0) {
+            throw new ServiceException("设备库存不足，下单失败");
+        }
 
         // 优惠券使用次数+1
         if (rentalOrder.getCouponCode() != null && !rentalOrder.getCouponCode().isEmpty()) {

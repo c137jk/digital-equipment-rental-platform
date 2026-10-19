@@ -447,12 +447,12 @@ Authorization: Bearer <token>
 | `sys_user` | 用户表（管理端与门户端共用） | `user_id`、`user_name`、`password`（BCrypt）、`nick_name`、`phonenumber`、`status` |
 | `rental_category` | 设备分类表（树形结构） | `category_id`、`category_name`、`parent_id`、`sort_order`、`status` |
 | `rental_equipment` | 设备信息表 | `equipment_id`、`equipment_name`、`category_id`、`brand`、`model`、`main_image`、`daily_price` / `weekly_price` / `monthly_price`、`deposit`、`stock`、`status` |
-| `rental_order` | 租赁订单表（核心业务表） | `order_no`、`user_id`、`equipment_id`、`rental_type`、`rental_days`、`total_amount`、`receiver_*`、`return_express_*`、`status`、`coupon_code`、`discount_amount`、`extend_days` / `extend_fee` / `extend_status`、`is_damaged` / `damage_fee` / `damage_reason` |
+| `rental_order` | 租赁订单表（核心业务表） | `order_no`、`user_id`、`equipment_id`、`quantity`、`rental_type`、`rental_days`、`rental_amount`、`deposit_amount`、`total_amount`、`receiver_*`、`return_express_*`、`status`、`coupon_code`、`discount_amount`、`extend_days` / `extend_fee` / `extend_status`、`is_damaged` / `deduct_amount` / `deduct_reason` |
 | `rental_cart` | 购物车表 | `cart_id`、`user_id`、`equipment_id`、`quantity`、`rental_type`、`rental_days` |
 | `rental_favorite` | 收藏表 | `favorite_id`、`user_id`、`equipment_id` |
-| `rental_coupon` | 优惠券表 | `coupon_code`（唯一）、`discount_amount`、`min_spend`、`valid_until`、`max_uses`、`current_uses` |
+| `rental_coupon` | 优惠券表 | `coupon_code`（唯一）、`discount_type`（1 百分比 / 2 固定金额）、`discount_value`、`min_amount`、`max_use`（-1 不限）、`use_count`、`start_time` / `end_time` |
 | `rental_review` | 设备评价表 | `review_id`、`order_id`、`equipment_id`、`user_id`、`rating`（1—5）、`content` |
-| `rental_message` | 消息通知表 | `user_id`、消息内容与已读状态 |
+| `rental_message` | 消息通知表 | `user_id`、`title`、`content`、`type`、`is_read` |
 | `rental_payment` | 支付记录表 | 订单支付流水 |
 
 ### 关键字段取值
@@ -461,7 +461,7 @@ Authorization: Bearer <token>
 |---|---|
 | `rental_order.status` | `0` 待支付 / `1` 已支付 / `2` 租赁中 / `3` 归还中 / `4` 已归还 / `5` 已取消 |
 | `rental_order.rental_type` | `1` 日租 / `2` 周租 / `3` 月租 |
-| `rental_order.extend_status` | `0` 无 / `1` 申请中 / `2` 已同意 / `3` 已拒绝 |
+| `rental_order.extend_status` | `0` 待审批 / `1` 已批准 / `2` 已拒绝（未申请时为空） |
 | `rental_order.is_damaged` | `0` 未损坏 / `1` 已损坏（触发押金扣减） |
 | `sys_user.status` | `0` 正常 / `1` 停用 |
 
@@ -481,6 +481,8 @@ Authorization: Bearer <token>
 ```
 
 下单时「写入订单 + 扣减库存 + 核销优惠券」在同一个 `@Transactional` 事务内完成，任一步失败整体回滚；管理员确认收货后系统自动回补设备库存，形成完整的租赁闭环。
+
+库存扣减采用**条件更新**而非「先查询再修改」：SQL 带 `where stock + #{quantity} >= 0`，只有库存充足的请求才能命中更新，影响行数为 0 时抛出业务异常触发事务回滚。并发下单时库存不会被扣成负数，且整个过程不依赖额外加锁。
 
 ### 2. 租期延期与定损扣款（租赁资产风险闭环）
 
@@ -519,7 +521,6 @@ Authorization: Bearer <token>
 
 - **在线支付**：对接微信支付、支付宝，替代当前的模拟支付流程。
 - **物流追踪**：集成快递 100 等物流查询 API，依据归还快递单号自动同步物流状态。
-- **库存并发控制**：库存扣减补充 `stock >= #{quantity}` 条件与影响行数校验（乐观锁），进一步提升高并发下的数据准确性。
 - **自动化测试**：为订单创建、库存扣减、优惠券核销等核心链路补充单元测试与集成测试。
 - **AI 能力升级**：引入多模态大模型，支持用户上传设备损坏照片自动识别损伤程度并给出定损建议金额。
 - **架构演进**：业务规模扩大后向微服务拆分（用户 / 设备 / 订单服务），并以 Redis 分布式锁替代数据库行锁，提升高并发下的库存扣减吞吐量。

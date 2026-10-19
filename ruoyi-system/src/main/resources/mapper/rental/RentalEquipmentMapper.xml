@@ -142,10 +142,16 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         </foreach>
     </delete>
 
+    <!--
+        库存变更：quantity 正数增加、负数减少。
+        条件 stock + quantity >= 0 保证扣减后库存不会为负（并发下单时只有库存充足的请求能命中），
+        库存不足时影响行数为 0，由 Service 层判断并抛出业务异常触发事务回滚。
+    -->
     <update id="updateStock">
         update rental_equipment 
         set stock = stock + #{quantity},
             rented_count = rented_count - #{quantity}
         where equipment_id = #{equipmentId}
+          and stock + #{quantity} &gt;= 0
     </update>
 </mapper>
